@@ -2,3 +2,4 @@
 staticfiles
 db.sqlite3
 .env
+users.json
