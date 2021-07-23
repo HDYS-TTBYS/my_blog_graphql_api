@@ -13,9 +13,6 @@ class AuthMutation(graphene.ObjectType):
     archive_account = relay.ArchiveAccount.Field()
     delete_account = relay.DeleteAccount.Field()
     update_account = relay.UpdateAccount.Field()
-    send_secondary_email_activation = relay.SendSecondaryEmailActivation.Field()
-    verify_secondary_email = relay.VerifySecondaryEmail.Field()
-    swap_emails = relay.SwapEmails.Field()
 
     # django-graphql-jwt inheritances
     token_auth = relay.ObtainJSONWebToken.Field()
