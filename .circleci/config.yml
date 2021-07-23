@@ -18,3 +18,12 @@ jobs:
           name: Running tests
           command: |
             python3 manage.py test
+
+workflows:
+  version: 2
+  build-test:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: main
