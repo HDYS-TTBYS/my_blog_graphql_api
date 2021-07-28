@@ -18,8 +18,9 @@ from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 
 from graphene_django.views import GraphQLView
+from decouple import config
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(str(config('ADMIN_SITE_URL', default='admin/')), admin.site.urls),
     path("graphql", csrf_exempt(GraphQLView.as_view(graphiql=True))),
 ]
