@@ -15,7 +15,7 @@ class Article(models.Model):
     userArticle = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='userArticle', on_delete=models.PROTECT)
     title = models.CharField(max_length=100)
-    tags = models.ManyToManyField(Tag, related_name='tag')
+    tags = models.ManyToManyField(Tag, related_name='tag', blank=True)
     content = models.TextField(blank=True, null=True)
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(verbose_name="作成日時", auto_now_add=True)
@@ -29,7 +29,7 @@ class Article(models.Model):
 
 class Comment(models.Model):
     """コメントモデル"""
-    text = models.CharField(max_length=100)
+    text = models.TextField(blank=True, null=True)
     userComment = models.ForeignKey(
         settings.AUTH_USER_MODEL, related_name='userComment',
         on_delete=models.CASCADE
