@@ -167,7 +167,7 @@ GRAPHQL_JWT = {
 GRAPHQL_AUTH = {
     # if allow to login without verification,
     # the register mutation will return a token
-    "ALLOW_LOGIN_NOT_VERIFIED": False,
+    "ALLOW_LOGIN_NOT_VERIFIED": True,
     # mutations fields options
     "LOGIN_ALLOWED_FIELDS": ["email"],
     "ALLOW_LOGIN_WITH_SECONDARY_EMAIL": False,
