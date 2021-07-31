@@ -30,7 +30,7 @@ SECRET_KEY = config('SECRET_KEY', default='SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['my-blog-api-01.herokuapp.com', 'localhost']
+ALLOWED_HOSTS = ['my-blog-api-01.herokuapp.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
