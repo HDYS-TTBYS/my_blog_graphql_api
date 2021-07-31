@@ -1,14 +1,28 @@
-from typing import Text
-from django.db.models import fields
 import graphene
-from graphene_django import DjangoObjectType
-from django.conf import settings
-from graphene_django.filter import DjangoFilterConnectionField
+from django.contrib.auth import get_user_model
+from django_filters import FilterSet, OrderingFilter
 from graphene import relay
-from graphql_auth.decorators import login_required, verification_required
-from .models import Tag, Article, Comment
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
+from graphql_jwt import exceptions
+from graphql_jwt.decorators import staff_member_required
 from graphql_relay import from_global_id
-from django_filters import FilterSet, CharFilter, OrderingFilter
+from users.models import CustomUser
+
+from .decorators import verification_required
+from .models import Article, Comment, Tag
+
+"""User"""
+
+
+class MyUserNode(DjangoObjectType):
+    class Meta:
+        model = CustomUser
+        filter_fields = {
+            'username': ['exact', 'icontains'],
+        }
+        interfaces = (relay.Node,)
+
 
 """Tag"""
 
@@ -28,6 +42,8 @@ class CreateTagMutation(relay.ClientIDMutation):
 
     tag = graphene.Field(TagNode)
 
+    @verification_required
+    @staff_member_required
     def mutate_and_get_payload(root, info, **input):
         tag = Tag(
             name=input.get('name'),
@@ -43,6 +59,8 @@ class UpdateTagMutation(relay.ClientIDMutation):
 
     tag = graphene.Field(TagNode)
 
+    @verification_required
+    @staff_member_required
     def mutate_and_get_payload(root, info, **input):
         tag = Tag(
             id=from_global_id(input.get('id'))[1]
@@ -59,6 +77,8 @@ class DeleteTagMutation(relay.ClientIDMutation):
 
     tag = graphene.Field(TagNode)
 
+    @verification_required
+    @staff_member_required
     def mutate_and_get_payload(root, info, **input):
         tag = Tag(
             id=from_global_id(input.get('id'))[1]
@@ -75,7 +95,6 @@ class ArticleFilter(FilterSet):
     class Meta:
         model = Article
         fields = {
-            "userArticle": ["exact"],
             "title": ['icontains'],
             "tags": ["exact"],
             "is_release": ["exact"],
@@ -111,13 +130,16 @@ class CreateArticleMutation(relay.ClientIDMutation):
 
     article = graphene.Field(ArticleNode)
 
+    @verification_required
+    @staff_member_required
     def mutate_and_get_payload(root, info, **input):
         article = Article(
-            userArticle=info.context.user.id,
+            user_article_id=info.context.user.id,
             title=input.get('title'),
             content=input.get('content'),
             is_release=input.get('is_release'),
         )
+        article.save()
         if input.get('tags') is not None:
             tags_set = []
             for tag in input.get('tags'):
@@ -129,7 +151,7 @@ class CreateArticleMutation(relay.ClientIDMutation):
             like_set = []
             for like in input.get('liked'):
                 like_id = from_global_id(like)[1]
-                like_obj = settings.AUTH_USER_MODEL.objects.get(id=like_id)
+                like_obj = get_user_model().objects.get(id=like_id)
                 like_set.append(like_obj)
             article.tags.set(like_set)
 
@@ -148,8 +170,14 @@ class UpdateArticleMutation(relay.ClientIDMutation):
 
     article = graphene.Field(ArticleNode)
 
+    @verification_required
+    @staff_member_required
     def mutate_and_get_payload(root, info, **input):
         article = Article.objects.get(id=from_global_id(input.get('id'))[1])
+
+        if info.context.user != article.user_article:
+            raise exceptions.PermissionDenied()
+
         if input.get("title") is not None:
             article.title = input.get("title")
         if input.get('tags') is not None:
@@ -167,9 +195,9 @@ class UpdateArticleMutation(relay.ClientIDMutation):
             like_set = []
             for like in input.get('liked'):
                 like_id = from_global_id(like)[1]
-                like_obj = settings.AUTH_USER_MODEL.objects.get(id=like_id)
+                like_obj = get_user_model().objects.get(id=like_id)
                 like_set.append(like_obj)
-            article.tags.set(like_set)
+            article.liked.set(like_set)
 
         article.save()
         return UpdateArticleMutation(article=article)
@@ -181,11 +209,14 @@ class DeleteArticleMutation(relay.ClientIDMutation):
 
     article = graphene.Field(ArticleNode)
 
+    @verification_required
+    @staff_member_required
     def mutate_and_get_payload(root, info, **input):
-        article = Article(
-            id=from_global_id(input.get('id'))[1]
+        article = Article.objects.get(id=from_global_id(input.get('id'))[1])
 
-        )
+        if info.context.user != article.user_article:
+            raise exceptions.PermissionDenied()
+
         article.delete()
         return DeleteArticleMutation(article=None)
 
@@ -203,15 +234,16 @@ class CommentNode(DjangoObjectType):
 class CreateCommentMutation(relay.ClientIDMutation):
     class Input:
         text = graphene.String(required=True)
-        articleComment = graphene.ID(required=True)
+        article_comment = graphene.ID(required=True)
 
     comment = graphene.Field(CommentNode)
 
+    @verification_required
     def mutate_and_get_payload(root, info, **input):
         comment = Comment(
             text=input.get('text'),
-            userComment=info.context.user.id,
-            articleComment=input.get('articleComment'),
+            user_comment_id=info.context.user.id,
+            article_comment_id=from_global_id(input.get('article_comment'))[1],
         )
         comment.save()
         return CreateCommentMutation(comment=comment)
@@ -222,12 +254,17 @@ class UpdateCommentMutation(relay.ClientIDMutation):
         id = graphene.ID(required=True)
         text = graphene.String(required=True)
 
-    comment = graphene.Field(ArticleNode)
+    comment = graphene.Field(CommentNode)
 
+    @verification_required
     def mutate_and_get_payload(root, info, **input):
         comment = Comment.objects.get(id=from_global_id(input.get('id'))[1])
+
+        if info.context.user != comment.user_comment:
+            raise exceptions.PermissionDenied()
+
         if input.get("text") is not None:
-            comment.title = input.get("text")
+            comment.text = input.get("text")
 
         comment.save()
         return UpdateCommentMutation(comment=comment)
@@ -237,13 +274,15 @@ class DeleteCommentMutation(relay.ClientIDMutation):
     class Input:
         id = graphene.ID(required=True)
 
-    comment = graphene.Field(ArticleNode)
+    comment = graphene.Field(CommentNode)
 
+    @ verification_required
     def mutate_and_get_payload(root, info, **input):
-        comment = Comment(
-            id=from_global_id(input.get('id'))[1]
+        comment = Comment.objects.get(id=from_global_id(input.get('id'))[1])
 
-        )
+        if info.context.user != comment.user_comment:
+            raise exceptions.PermissionDenied()
+
         comment.delete()
         return DeleteCommentMutation(comment=None)
 
