@@ -241,3 +241,10 @@ if not DEBUG:
     EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
 
 AUTH_USER_MODEL = "users.CustomUser"
+
+DEPLOY = config('DEPLOY', default=False, cast=bool)
+if DEPLOY:
+    SECURE_HSTS_SECONDS = 60  # 無知にいじると危険なのでコメントアウト
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
