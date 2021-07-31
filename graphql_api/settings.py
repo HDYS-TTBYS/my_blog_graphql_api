@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['my-blog-api-01.herokuapp.com', 'localhost', '127.0.0.1']
 
@@ -231,5 +231,13 @@ GRAPHQL_AUTH = {
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# send email
+if not DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.googlemail.com'
+    EMAIL_USE_TLS = True
+    EMAIL_PORT = 587
+    EMAIL_HOST_USER = config('EMAIL_ADRESS')
+    EMAIL_HOST_PASSWORD = config('EMAIL_PASSWORD')
 
 AUTH_USER_MODEL = "users.CustomUser"
