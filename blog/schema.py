@@ -95,11 +95,11 @@ class ArticleFilter(FilterSet):
     class Meta:
         model = Article
         fields = {
+            "user_article": ["exact"],
             "title": ['icontains'],
             "tags": ["exact"],
             "is_release": ["exact"],
-            'created_at': ['lt', 'gt'],
-            'updated_at': ['lt', 'gt'],
+            "liked": ["exact"]
         }
     order_by_created_at = OrderingFilter(
         fields=(
@@ -224,10 +224,26 @@ class DeleteArticleMutation(relay.ClientIDMutation):
 """Comment"""
 
 
+class CommentFilter(FilterSet):
+    class Meta:
+        model = Comment
+        fields = "__all__"
+    order_by_created_at = OrderingFilter(
+        fields=(
+            ('created_at'),
+        )
+    )
+    order_by_updated_at = OrderingFilter(
+        fields=(
+            ('updated_at'),
+        )
+    )
+
+
 class CommentNode(DjangoObjectType):
     class Meta:
         model = Comment
-        filter_fields = "__all__"
+        filterset_class = CommentFilter
         interfaces = (relay.Node,)
 
 
