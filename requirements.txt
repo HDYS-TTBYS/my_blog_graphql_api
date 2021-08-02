@@ -11,7 +11,6 @@ django-graphql-jwt==0.3.0
 django-toolbelt==0.0.1
 graphene==2.1.9
 graphene-django==2.15.0
-graphene-django-pagination @ https://github.com/instruct-br/graphene-django-pagination/archive/master.zip
 graphql-core==2.3.2
 graphql-relay==2.0.1
 gunicorn==20.1.0
