@@ -1,9 +1,9 @@
 import graphene
-from graphene_django_pagination import DjangoPaginationConnectionField
 from django.contrib.auth import get_user_model
-from django_filters import FilterSet
+from django_filters import FilterSet, OrderingFilter
 from graphene import relay
 from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 from graphql_jwt import exceptions
 from graphql_jwt.decorators import staff_member_required
 from graphql_relay import from_global_id
@@ -91,16 +91,32 @@ class DeleteTagMutation(relay.ClientIDMutation):
 """Article"""
 
 
-class ArticleNode(DjangoObjectType):
+class ArticleFilter(FilterSet):
     class Meta:
         model = Article
-        filter_fields = {
+        fields = {
             "user_article": ["exact"],
             "title": ['icontains'],
             "tags": ["exact"],
             "is_release": ["exact"],
             "liked": ["exact"]
         }
+    order_by_created_at = OrderingFilter(
+        fields=(
+            ('created_at'),
+        )
+    )
+    order_by_updated_at = OrderingFilter(
+        fields=(
+            ('updated_at'),
+        )
+    )
+
+
+class ArticleNode(DjangoObjectType):
+    class Meta:
+        model = Article
+        filterset_class = ArticleFilter
         interfaces = (relay.Node,)
 
 
@@ -212,6 +228,16 @@ class CommentFilter(FilterSet):
     class Meta:
         model = Comment
         fields = "__all__"
+    order_by_created_at = OrderingFilter(
+        fields=(
+            ('created_at'),
+        )
+    )
+    order_by_updated_at = OrderingFilter(
+        fields=(
+            ('updated_at'),
+        )
+    )
 
 
 class CommentNode(DjangoObjectType):
@@ -293,10 +319,10 @@ class Mutation(graphene.AbstractType):
 
 
 class Query(graphene.ObjectType):
-    all_tags = DjangoPaginationConnectionField(TagNode)
-    all_articles = DjangoPaginationConnectionField(
+    all_tags = DjangoFilterConnectionField(TagNode)
+    all_articles = DjangoFilterConnectionField(
         ArticleNode)
-    all_comments = DjangoPaginationConnectionField(CommentNode)
+    all_comments = DjangoFilterConnectionField(CommentNode)
 
     def resolve_all_tags(self, info, **kwargs):
         return Tag.objects.all()
