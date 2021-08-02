@@ -17,13 +17,13 @@ class Article(models.Model):
         on_delete=models.CASCADE
     )
     title = models.CharField(max_length=100)
-    tags = models.ManyToManyField(Tag, related_name='tag', blank=True)
+    tags = models.ManyToManyField(Tag, related_name='tag_article', blank=True)
     content = models.TextField(blank=True, null=True)
     is_release = models.BooleanField(default=False)
     created_at = models.DateTimeField(verbose_name="作成日時", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="更新日時", auto_now=True)
     liked = models.ManyToManyField(
-        get_user_model(), related_name='liked', blank=True)
+        get_user_model(), related_name='like_users', blank=True)
 
     def __str__(self):
         return self.title
