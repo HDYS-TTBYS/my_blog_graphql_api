@@ -1,7 +1,7 @@
 import graphene
 from django.contrib.auth import get_user_model
 from django_filters import FilterSet, OrderingFilter
-from graphene import relay
+from graphene import relay,  Int
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql_jwt import exceptions
@@ -11,6 +11,17 @@ from users.models import CustomUser
 
 from .decorators import verification_required
 from .models import Article, Comment, Tag
+
+
+class TotalCountConnection(relay.Connection):
+    class Meta:
+        abstract = True
+
+    total_count = Int()
+
+    def resolve_total_count(root, info, **kwargs):
+        return root.length
+
 
 """User"""
 
@@ -22,6 +33,7 @@ class MyUserNode(DjangoObjectType):
             'username': ['exact', 'icontains'],
         }
         interfaces = (relay.Node,)
+        connection_class = TotalCountConnection
 
 
 """Tag"""
@@ -34,6 +46,7 @@ class TagNode(DjangoObjectType):
             'name': ['exact', 'icontains'],
         }
         interfaces = (relay.Node,)
+        connection_class = TotalCountConnection
 
 
 class CreateTagMutation(relay.ClientIDMutation):
@@ -118,6 +131,7 @@ class ArticleNode(DjangoObjectType):
         model = Article
         filterset_class = ArticleFilter
         interfaces = (relay.Node,)
+        connection_class = TotalCountConnection
 
 
 class CreateArticleMutation(relay.ClientIDMutation):
@@ -245,6 +259,7 @@ class CommentNode(DjangoObjectType):
         model = Comment
         filterset_class = CommentFilter
         interfaces = (relay.Node,)
+        connection_class = TotalCountConnection
 
 
 class CreateCommentMutation(relay.ClientIDMutation):
