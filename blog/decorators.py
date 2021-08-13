@@ -1,15 +1,16 @@
 from graphql_jwt import exceptions
+from functools import wraps
 
 
 def verification_required(fn):
-    def wrapper(root, info, **kwargs):
-        user = info.context.user
+    @wraps(fn)
+    def wrapper(root, info, **input):
         try:
-            if not user.status.verified:
+            if not info.context.user.status.verified:
                 raise exceptions.PermissionDenied()
         except:
             raise exceptions.PermissionDenied()
-        finally:
-            return fn(root, info, **kwargs)
+
+        return fn(root, info, **input)
 
     return wrapper
